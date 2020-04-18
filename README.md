@@ -69,6 +69,15 @@ func main() {
 
     // Pass your informer into goroutines here...
 
+    // Stop a single goroutine by name
+    informers.Get("informer1").Stop()
+
+    // Informers that don't exist resolve immediately to prevent existence checking and error handling
+    informers.Get("doesntexist").Stop()
+
+    // Or you can check for existence
+    ok := informers.Exists("informer1")
+
     // Block until all goroutines acknowledge the stop
     informers.StopAll()
 
