@@ -8,7 +8,7 @@ $ go get github.com/clarkmcc/stopinformer
 
 ## Example
 ### Single Stop Informer
-For managing a single stop informer
+For managing a single stop informer.
 ```go
 func main() {
 
@@ -38,8 +38,28 @@ func main() {
 }
 ```
 
+### Multiple Stop Informers
+For managing multiple (non-named) stop informers. This is useful for when you want to interact with multipl stop informers as a group.
+
+```go
+func main() {
+    informers := NewGenericStopInformers()
+    
+    informers.Create(stopinformer.NewGenericStopInformer())
+    informers.Create(stopinformer.NewGenericStopInformer())
+
+    // Pass your informer into goroutines here...
+
+    // Block until all goroutines acknowledge the stop
+    informers.StopAll()
+
+    //Or get a notification via a channel when all goroutines acknowledged the stop
+    <-informers.StopAllAndNotify(0)
+}
+```
+
 ### Stop Informer Map
-Managing multiple named stop informers
+For managing multiple named stop informers. This is useful for when you want to interact with multiple stop informers individually.
 ```go
 func main() {
     informers := NewGenericStopInformerMap()
