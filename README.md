@@ -33,7 +33,7 @@ func main() {
     // Perform a blocking stop of the goroutine
     informer.Stop()
 
-    // Or get a notification via a channel when the goroutine as acknowledged the stop
+    // Or get a notification via a channel when the goroutine has acknowledged the stop
     <- informer.StopAndNotify(0)
 }
 ```
