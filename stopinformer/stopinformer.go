@@ -64,6 +64,13 @@ func (s *stopAcker) Acknowledge() {
 	s.ackChan <- struct{}{}
 }
 
+// Supports the event where the goroutine may have exited unexpectedly. In that event, someone
+// waiting for the acknowledgement would wait forever
+func (s *stopAcker) AcknowledgeAndResolve(informer Interface) {
+	informer.ResolveImmediately()
+	s.ackChan <- struct{}{}
+}
+
 // Creates a new stop informer with an optional parameter for the buffer size
 func NewGenericStopInformer() Interface {
 	internalStopChan := make(DoubleStructChan)
