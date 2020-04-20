@@ -49,25 +49,23 @@ type genericStopInformer struct {
 // stopAcker is sent as a value through the internalStopChan and is generally received by the
 // target goroutine
 type stopAcker struct {
-	ackChan SingleStructChan
+	ackChan  SingleStructChan
+	informer Interface
 }
 
 // Returns a new instance of the stopAcker
-func NewStopAcker(ackChan SingleStructChan) *stopAcker {
-	return &stopAcker{ackChan: ackChan}
+func NewStopAcker(ackChan SingleStructChan, informer Interface) *stopAcker {
+	return &stopAcker{
+		ackChan:  ackChan,
+		informer: informer,
+	}
 }
 
 // Utilized by the target goroutine to 'acknowledge' the stop command. Calling this method
 // unblocks the Interface.Stop command or sends a notification to the Interface.StopAndNotify
 // channel. This is usually called using defer.
 func (s *stopAcker) Acknowledge() {
-	s.ackChan <- struct{}{}
-}
-
-// Supports the event where the goroutine may have exited unexpectedly. In that event, someone
-// waiting for the acknowledgement would wait forever
-func (s *stopAcker) AcknowledgeAndResolve(informer Interface) {
-	informer.ResolveImmediately()
+	s.informer.ResolveImmediately()
 	s.ackChan <- struct{}{}
 }
 
@@ -78,18 +76,20 @@ func NewGenericStopInformer() Interface {
 	internalWatchChan := make(SingleAckerChan)
 	externalWatchStoppedChan := make(SingleStructChan)
 
-	go func() {
-		<-internalStopChan
-		internalWatchChan <- NewStopAcker(internalNotifyStoppedChan)
-	}()
-
-	return &genericStopInformer{
+	informer := &genericStopInformer{
 		resolveImmediately:        false,
 		internalStopChan:          internalStopChan,
 		internalNotifyStoppedChan: internalNotifyStoppedChan,
 		internalWatchChan:         internalWatchChan,
 		externalWatchStoppedChan:  externalWatchStoppedChan,
 	}
+
+	go func() {
+		<-internalStopChan
+		internalWatchChan <- NewStopAcker(internalNotifyStoppedChan, informer)
+	}()
+
+	return informer
 }
 
 // Stop blocks until the stop informer has received confirmation that the resource has stopped
